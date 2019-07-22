@@ -1,0 +1,71 @@
+package com.bankresearch.jcpt.fileserver;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.StringBody;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+
+public class TestUpload extends HttpServlet {
+
+	public void service(HttpServletRequest req, HttpServletResponse res) throws ClientProtocolException, IOException{
+		File f = new File("D:/city.txt");
+		String u = "http://192.168.0.58:8080/fileserver/sapi/upload?param=value@@@@";
+		System.out.println("+++++++++++ "+ u);
+
+		CloseableHttpClient client = HttpClients.createDefault();
+		HttpPost post = new HttpPost(u);
+		FileBody body = new FileBody(f);
+		
+		
+		HttpEntity entity = MultipartEntityBuilder.create()
+							.addPart("directory", new StringBody("/ddd/eee", ContentType.create("text/plain", "UTF-8")))
+							.addPart("credential", new StringBody("sHTd/9exYuk=", ContentType.create("text/plain", "UTF-8")))
+							.addPart("filename1", new StringBody("rename.txt", ContentType.create("text/plain", "UTF-8")))
+							.addPart("attachment1", body)
+							.addPart("rename", new StringBody("false", ContentType.create("text/plain", "UTF-8")))
+							.build();
+		post.setEntity(entity);
+
+		System.out.println(">>>>>>>>>>>>>>> excuting request: " + post.getRequestLine());;
+
+		CloseableHttpResponse resp = client.execute(post);
+		HttpEntity resEntity = resp.getEntity();
+		String result = null;
+		if (null != resEntity) {
+			System.out.println(">>>>>>>>>>>>>Response content length: "+ resEntity.getContentLength());
+			System.out.println(resp.getStatusLine().getStatusCode());
+			System.out.println(resp.getStatusLine());
+			System.out.println(">>>>>>>>>>>>>Response content length: "+ resEntity.getContentLength());
+			System.out.println(resEntity);
+
+			result = EntityUtils.toString(resEntity);
+			
+		}
+
+		EntityUtils.consume(resEntity);
+
+		resp.close();
+		client.close();
+
+		System.out.println(result);
+		
+		res.sendRedirect(req.getContextPath() + "/result.html");
+	}
+
+}
